@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shipr surfaces v2 — Mac + dock badge · Eidos UI</title>
+  <meta name="description" content="Shipr Mac app defaults: window chrome, fleet list, dock badge driven by in-flight count." />
+  <link rel="stylesheet" href="/brand.css?v=8" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink);
+      font-family: var(--sans); padding: 1.4rem 1.25rem 3rem; line-height: 1.45;
+    }
+    .crumb { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-soft); margin-bottom: 0.55rem; }
+    .crumb a { color: var(--accent); text-decoration: none; }
+    h1 { font-size: 1.35rem; font-weight: 600; margin: 0 0 0.35rem; letter-spacing: -0.02em; }
+    .lede { color: var(--ink-soft); font-size: 0.92rem; max-width: 44rem; margin: 0 0 1.4rem; }
+    .lede strong { color: var(--ink); }
+
+    .stage {
+      display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 1.5rem; align-items: end;
+    }
+    @media (max-width: 800px) { .stage { grid-template-columns: 1fr; } }
+
+    .mac {
+      background: var(--bg); border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+      box-shadow: 0 22px 60px color-mix(in srgb, var(--ink) 14%, transparent);
+      min-height: 480px; display: flex; flex-direction: column;
+    }
+    .mac-chrome {
+      display: flex; align-items: center; gap: 0.45rem; padding: 0.55rem 0.75rem;
+      background: var(--surface); border-bottom: 1px solid var(--line);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+    .dot.r { background: color-mix(in srgb, var(--ship-failed) 80%, var(--line)); }
+    .dot.y { background: color-mix(in srgb, var(--ship-blocked) 80%, var(--line)); }
+    .dot.g { background: color-mix(in srgb, var(--ship-ok) 80%, var(--line)); }
+    .mac-title { flex: 1; text-align: center; font-size: 0.78rem; color: var(--ink-soft); }
+    .mac-body { display: flex; flex: 1; min-height: 0; }
+    .side {
+      width: 168px; flex: none; background: var(--surface); border-right: 1px solid var(--line);
+      padding: 0.65rem 0; font-size: 0.8rem;
+    }
+    .side button {
+      appearance: none; display: block; width: 100%; text-align: left; border: none;
+      background: transparent; color: var(--ink-soft); font: inherit; padding: 0.4rem 0.85rem; cursor: pointer;
+    }
+    .side button.on { color: var(--ink); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); font-weight: 600; }
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+      padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--line); font-size: 0.85rem;
+    }
+    .toolbar .mark {
+      font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
+      text-transform: uppercase; font-weight: 700; color: var(--accent);
+    }
+    .list { flex: 1; overflow: auto; }
+    .row {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 0.75rem; align-items: center;
+      width: 100%; text-align: left; border: none; border-bottom: 1px solid var(--line);
+      background: transparent; color: inherit; font: inherit; padding: 0.7rem 0.9rem; cursor: pointer;
+    }
+    .row:hover, .row.sel { background: var(--surface); }
+    .chip {
+      font-family: var(--mono); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 0.18rem 0.4rem; border-radius: var(--radius);
+    }
+    .chip.inflight { background: var(--ship-inflight); color: var(--ship-inflight-ink); }
+    .chip.ok { background: var(--ship-ok); color: var(--ship-ok-ink); }
+    .chip.blocked { background: var(--ship-blocked); color: var(--ship-blocked-ink); }
+    .chip.failed { background: var(--ship-failed); color: var(--ship-failed-ink); }
+    .title { font-weight: 600; font-size: 0.88rem; }
+    .sub { font-size: 0.72rem; color: var(--ink-soft); margin-top: 0.12rem; }
+    .when { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-soft); }
+
+    .dock-wrap { text-align: center; }
+    .dock-label {
+      font-family: var(--mono); font-size: 0.65rem; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--ink-soft); margin-bottom: 0.55rem;
+    }
+    .dock {
+      display: inline-flex; align-items: flex-end; gap: 0.55rem;
+      padding: 0.55rem 0.75rem 0.45rem;
+      background: color-mix(in srgb, var(--surface) 85%, transparent);
+      border: 1px solid var(--line); border-radius: 14px;
+      backdrop-filter: blur(8px);
+    }
+    .dock-app {
+      position: relative; width: 52px; height: 52px; border-radius: 12px;
+      background: var(--accent); color: var(--accent-ink);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
+      box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 35%, transparent);
+    }
+    .dock-app .badge {
+      position: absolute; top: -6px; right: -6px;
+      min-width: 1.25rem; height: 1.25rem; padding: 0 0.3rem;
+      border-radius: 999px; background: var(--badge-count-bg); color: var(--badge-count-ink);
+      border: 2px solid var(--bg);
+      font-size: 0.65rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dock-app.ghost {
+      background: var(--surface); color: var(--ink-soft); box-shadow: none; font-size: 0.55rem;
+    }
+    .callout {
+      margin-top: 1.35rem; max-width: 48rem; padding: 1rem 1.1rem;
+      border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: 0.85rem;
+    }
+    .callout strong { display: block; margin-bottom: 0.35rem; }
+    .callout ol { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+    .callout code { font-family: var(--mono); font-size: 0.8em; color: var(--accent); }
+  </style>
+</head>
+<body>
+  <p class="crumb"><a href="/">eidos ui</a> / <a href="../TECHNIQUE.md">shipr-surfaces</a> / v2</p>
+  <h1>Mac + dock badge · Shipr defaults</h1>
+  <p class="lede"><strong>Lesson:</strong> dock badge = in-flight across paired orgs. Clicking an org in the sidebar filters the list; the badge still reflects the global in-flight count unless you opt into per-org badges later.</p>
+
+  <div class="stage">
+    <div class="mac">
+      <div class="mac-chrome">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <div class="mac-title">Shipr</div>
+      </div>
+      <div class="mac-body">
+        <nav class="side" id="side" aria-label="Orgs"></nav>
+        <div class="main">
+          <div class="toolbar">
+            <span class="mark">Fleet</span>
+            <span id="summary" style="color:var(--ink-soft);font-size:0.78rem"></span>
+          </div>
+          <div class="list" id="list"></div>
+        </div>
+      </div>
+    </div>
+    <div class="dock-wrap">
+      <div class="dock-label">Dock</div>
+      <div class="dock" aria-label="macOS dock mock">
+        <div class="dock-app ghost">Finder</div>
+        <div class="dock-app" title="Shipr">
+          SHIP
+          <span class="badge" id="dock-badge">2</span>
+        </div>
+        <div class="dock-app ghost">Term</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Ship checklist</strong>
+    <ol>
+      <li>Dock badge uses <code>--badge-count-*</code> and counts <code>inflight</code> only.</li>
+      <li>Zero in-flight → hide the badge (toggle in a later rung if you want a quiet mode).</li>
+      <li>Window list uses the same chips as Chrome and phone.</li>
+      <li>Daemon owns freshness; the UI never invents a second status source.</li>
+    </ol>
+  </div>
+
+  <script>
+    const SHIPS = [
+      { id: "s1", org: "eidos-agi", name: "release · v0.4.2", status: "inflight", age: "2m", blocker: "Waiting on proof_commands" },
+      { id: "s2", org: "eidos-agi", name: "deploy · staging", status: "inflight", age: "8m", blocker: "Railway module running" },
+      { id: "s3", org: "greenmark", name: "nightly gold bake", status: "blocked", age: "40m", blocker: "human gate" },
+      { id: "s4", org: "eidos-agi", name: "ci · main", status: "ok", age: "1h", blocker: "Passed" },
+      { id: "s5", org: "greenmark", name: "pack seal", status: "failed", age: "2h", blocker: "proof exit 1" },
+    ];
+    const NAV = ["All orgs", "eidos-agi", "greenmark"];
+    let nav = "All orgs", selected = "s1";
+    const CHIP = { inflight: "In flight", ok: "Ok", blocked: "Blocked", failed: "Failed" };
+
+    function rows() {
+      if (nav === "All orgs") return SHIPS;
+      return SHIPS.filter((s) => s.org === nav);
+    }
+    function esc(t) {
+      return String(t).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+    }
+    function render() {
+      const inflight = SHIPS.filter((s) => s.status === "inflight").length;
+      const badge = document.getElementById("dock-badge");
+      badge.textContent = String(inflight);
+      badge.style.display = inflight ? "flex" : "none";
+      document.getElementById("summary").textContent = `${rows().length} shipments · ${inflight} in flight (dock)`;
+
+      const side = document.getElementById("side");
+      side.innerHTML = NAV.map((n) => `<button type="button" class="${n === nav ? "on" : ""}" data-nav="${n}">${n}</button>`).join("");
+      side.querySelectorAll("button").forEach((b) => b.onclick = () => { nav = b.dataset.nav; render(); });
+
+      const list = document.getElementById("list");
+      list.innerHTML = rows().map((s) => `
+        <button type="button" class="row${s.id === selected ? " sel" : ""}" data-id="${s.id}">
+          <span class="chip ${s.status}">${CHIP[s.status]}</span>
+          <span><div class="title">${esc(s.name)}</div><div class="sub">${esc(s.org)} · ${esc(s.blocker)}</div></span>
+          <span class="when">${s.age}</span>
+        </button>`).join("");
+      list.querySelectorAll(".row").forEach((b) => b.onclick = () => { selected = b.dataset.id; render(); });
+    }
+    render();
+  </script>
+</body>
+</html>

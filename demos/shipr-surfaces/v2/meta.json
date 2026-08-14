@@ -1,0 +1,6 @@
+{
+  "title": "Mac + dock badge",
+  "desc": "Shipr.app window with fleet list. Dock badge = in-flight count across paired orgs. Same status tokens as Chrome and phone.",
+  "why": "Operators glance the dock; the badge must mean in-flight shipments, not unread marketing noise.",
+  "tags": ["shipr", "mac"]
+}

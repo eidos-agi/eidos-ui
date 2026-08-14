@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Eidos UI — chat interfaces like the major companies</title>
 <meta name="description" content="Demo families for agent products: a chat frontend rebuilt version by version, and product shell mocks. Every version stays online, with source and copy-for-agent instructions.">
-<link rel="stylesheet" href="/brand.css?v=7">
+<link rel="stylesheet" href="/brand.css?v=8">
 <style>
   * { box-sizing: border-box; margin: 0; }
   body { background: var(--bg); color: var(--ink); font-family: var(--sans);
@@ -139,6 +139,7 @@
     <a href="https://github.com/eidos-agi/eidos-ui">source: eidos-agi/eidos-ui</a>
     <a href="https://github.com/eidos-agi/ui-patterns">patterns: eidos-agi/ui-patterns</a>
     <a href="demos/product-shell-mock/TECHNIQUE.md">shell-mock technique</a>
+    <a href="demos/shipr-surfaces/TECHNIQUE.md">shipr surfaces</a>
     <a href="https://eidosagi.com">eidos agi</a>
   </div>
 </div>
@@ -151,14 +152,17 @@
       version fixes one named problem and stays online. Click anything in the
       sidebar: the demo plays itself, the source shows on the right, and one
       button copies agent-ready instructions for using the pattern in your own
-      app.</p>
+      app. Shipr surfaces (Chrome, phone, Mac, tablet) sit beside the chat ladder
+      as the multi-device defaults for shipment monitoring.</p>
       <div id="detail"></div>
       <p class="note">Chat versions are checked against the acceptance list in
       <a href="https://github.com/eidos-agi/ui-patterns/blob/main/briefs/01-reference-chat-demo.md">brief 01</a>
       of eidos-agi/ui-patterns. Every chat demo talks to the same
       <a href="https://github.com/eidos-agi/eidos-ui/blob/master/demos/mock-ai/v1.js">mock agent</a>
       (chat-events v1.1); the agent code never changes between versions. Shell
-      mocks use only in-page JS. Colors and sizes are CSS tokens you can swap.</p>
+      mocks and Shipr surfaces use only in-page JS. Colors and sizes are CSS
+      tokens you can swap (<code style="font-family:var(--mono);font-size:.85em">--ship-*</code>,
+      <code style="font-family:var(--mono);font-size:.85em">--panel-side-min</code>).</p>
     </div>
   </div>
   <div id="veil"><div id="pierow"><div id="piewrap"><div id="pie"></div></div>

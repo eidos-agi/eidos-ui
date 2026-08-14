@@ -1,0 +1,6 @@
+{
+  "title": "Tablet landscape",
+  "desc": "Split view: fleet list + detail. Not a shrunk Mac window. Same shipment tokens and badge semantics.",
+  "why": "Tablets get width without desktop chrome habits. List + detail side by side, thumb-friendly primary actions.",
+  "tags": ["shipr", "tablet"]
+}

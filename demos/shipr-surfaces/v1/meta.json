@@ -1,0 +1,6 @@
+{
+  "title": "Phone fleet",
+  "desc": "Same shipment ledger in a phone bezel. Context strip + thumb-reach tab bar. Badge = in-flight count.",
+  "why": "Fleet monitoring from a phone needs thumb reach and dense rows, not a shrunk desktop chrome.",
+  "tags": ["shipr", "phone"]
+}

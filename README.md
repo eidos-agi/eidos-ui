@@ -2,7 +2,7 @@
 
 **Live at [ui.eidosagi.com](https://ui.eidosagi.com).**
 
-A public, work-in-progress gallery of UI demos for agent products — two families:
+A public, work-in-progress gallery of UI demos for agent products:
 
 ### 1. Agent chat (`demos/reference-chat/`)
 Reference implementations of the interaction grain that makes watching an AI
@@ -24,6 +24,16 @@ does this control live?” Technique: [`demos/product-shell-mock/TECHNIQUE.md`](
 - **v0 live:** context **pill strip** chooser (You global · Contexts filter
   content). Dogfood origin: Knox Approve You + Contexts.
 - No mock-ai server — pure static HTML + in-page data.
+
+### 3. Shipr surfaces (`demos/shipr-surfaces/`)
+**Canonical defaults for Shipr** across Chrome add-in, phone, Mac (dock badge),
+and tablet. Status and panel tokens live in `/brand.css`. Technique:
+[`demos/shipr-surfaces/TECHNIQUE.md`](demos/shipr-surfaces/TECHNIQUE.md).
+
+- **v0** Chrome side panel (360px floor) + fake Actions host, shared selection
+- **v1** Phone fleet + badge
+- **v2** Mac window + dock badge
+- **v3** Tablet list + detail split
 
 ### Shared rules
 - **Brand:** Eidos UI is our house guide; tokens stay swappable. CSS custom properties in one

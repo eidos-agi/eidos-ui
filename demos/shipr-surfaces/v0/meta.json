@@ -1,0 +1,6 @@
+{
+  "title": "Chrome side panel",
+  "desc": "Fake GitHub Actions host plus a 360px Shipr side panel. Shared selection: click a run on the page, the panel highlights the same shipment. Page URL owns context.",
+  "why": "Chrome Side Panel floor is 360px and extensions cannot set default width. Design density and context binding for that constraint before packaging MV3.",
+  "tags": ["shipr", "chrome"]
+}

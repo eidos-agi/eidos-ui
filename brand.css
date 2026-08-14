@@ -29,6 +29,26 @@
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --sans: 'Space Grotesk', -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --radius: 3px;
+
+  /* Shipment status (Shipr + any fleet surface) */
+  --ship-inflight: #9a6d35;
+  --ship-inflight-ink: #faf5ec;
+  --ship-ok: #4a7c59;
+  --ship-ok-ink: #f4faf5;
+  --ship-blocked: #8a7040;
+  --ship-blocked-ink: #faf6ec;
+  --ship-failed: #a04a32;
+  --ship-failed-ink: #ffffff;
+
+  /* Chrome side panel / dense lists (Chrome floor = 360px) */
+  --panel-side-min: 360px;
+  --panel-side-comfort: 420px;
+  --panel-dense-pad: 0.55rem 0.75rem;
+  --panel-row-h: 2.75rem;
+
+  /* Dock / tab count badges */
+  --badge-count-bg: #9a6d35;
+  --badge-count-ink: #faf5ec;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -46,6 +66,18 @@
     --badge-wip-bg: #28221c;
     --badge-wip-ink: #8b8179;
     --bad: #c4694f;
+
+    --ship-inflight: #c4935a;
+    --ship-inflight-ink: #1e1a17;
+    --ship-ok: #6a9a78;
+    --ship-ok-ink: #121810;
+    --ship-blocked: #c4a06a;
+    --ship-blocked-ink: #1e1a17;
+    --ship-failed: #c4694f;
+    --ship-failed-ink: #161210;
+
+    --badge-count-bg: #c4935a;
+    --badge-count-ink: #1e1a17;
   }
 }
 

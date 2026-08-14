@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shipr surfaces v0 — Chrome side panel · Eidos UI</title>
+  <meta name="description" content="Shipr Chrome add-in defaults: 360px side panel on a fake Actions page, shared shipment selection, status tokens from brand.css." />
+  <link rel="stylesheet" href="/brand.css?v=8" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      padding: 1.4rem 1.25rem 3rem;
+      line-height: 1.45;
+    }
+    .crumb {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-soft);
+      margin-bottom: 0.55rem;
+    }
+    .crumb a { color: var(--accent); text-decoration: none; }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin: 0 0 0.35rem;
+      letter-spacing: -0.02em;
+    }
+    .lede {
+      color: var(--ink-soft);
+      font-size: 0.92rem;
+      max-width: 46rem;
+      margin: 0 0 1.4rem;
+    }
+    .lede strong { color: var(--ink); font-weight: 600; }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--panel-side-min);
+      gap: 0;
+      align-items: stretch;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: 0 18px 48px color-mix(in srgb, var(--ink) 12%, transparent);
+      min-height: 560px;
+    }
+    @media (max-width: 900px) {
+      .stage { grid-template-columns: 1fr; }
+      .panel { width: 100% !important; max-width: none; border-left: none; border-top: 1px solid var(--line); }
+    }
+
+    /* —— Fake browser + GitHub host —— */
+    .browser { display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+    .browser-bar {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.55rem 0.75rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .dots { display: flex; gap: 5px; }
+    .dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); display: block; }
+    .url {
+      flex: 1;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--ink-soft);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 0.28rem 0.55rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .host { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .gh-top {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.85rem;
+    }
+    .gh-top .repo { font-weight: 600; }
+    .gh-top .repo span { color: var(--ink-soft); font-weight: 400; }
+    .gh-nav {
+      display: flex; gap: 0.15rem; padding: 0 0.75rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.8rem;
+    }
+    .gh-nav button {
+      appearance: none; border: none; background: transparent;
+      color: var(--ink-soft); padding: 0.55rem 0.7rem;
+      cursor: pointer; font: inherit; border-bottom: 2px solid transparent;
+    }
+    .gh-nav button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+    .gh-body { padding: 1rem; overflow: auto; flex: 1; }
+    .gh-body h2 { font-size: 1rem; margin: 0 0 0.75rem; font-weight: 600; }
+    .run {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0.65rem;
+      align-items: start;
+      padding: 0.7rem 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      margin-bottom: 0.45rem;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      font: inherit;
+      color: inherit;
+    }
+    .run:hover { border-color: var(--accent); }
+    .run.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+    .run .dot {
+      width: 10px; height: 10px; border-radius: 50%; margin-top: 0.35rem;
+      background: var(--ship-inflight);
+    }
+    .run[data-status="ok"] .dot { background: var(--ship-ok); }
+    .run[data-status="blocked"] .dot { background: var(--ship-blocked); }
+    .run[data-status="failed"] .dot { background: var(--ship-failed); }
+    .run .name { font-weight: 600; font-size: 0.88rem; }
+    .run .meta { font-size: 0.75rem; color: var(--ink-soft); margin-top: 0.15rem; }
+    .run .when { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-soft); white-space: nowrap; }
+
+    /* —— Shipr side panel —— */
+    .panel {
+      width: var(--panel-side-min);
+      max-width: var(--panel-side-min);
+      background: var(--bg);
+      border-left: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .panel-head {
+      padding: var(--panel-dense-pad);
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .panel-brand {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.5rem; margin-bottom: 0.45rem;
+    }
+    .panel-brand .mark {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .panel-brand .live {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.12rem 0.4rem;
+      border-radius: 999px;
+      background: var(--ship-inflight);
+      color: var(--ship-inflight-ink);
+    }
+    .ctx {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .ctx .soft { color: var(--ink-soft); font-weight: 400; }
+    .filters {
+      display: flex; flex-wrap: wrap; gap: 0.3rem;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .filters button {
+      appearance: none;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      padding: 0.22rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink-soft);
+      cursor: pointer;
+    }
+    .filters button.on {
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-color: var(--accent);
+    }
+    .list { flex: 1; overflow: auto; padding: 0.35rem 0; }
+    .row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.55rem;
+      align-items: start;
+      width: 100%;
+      text-align: left;
+      border: none;
+      border-left: 3px solid transparent;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      padding: 0.55rem 0.75rem;
+      cursor: pointer;
+      min-height: var(--panel-row-h);
+    }
+    .row:hover { background: var(--surface); }
+    .row.sel {
+      background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+      border-left-color: var(--accent);
+    }
+    .chip {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.18rem 0.4rem;
+      border-radius: var(--radius);
+      white-space: nowrap;
+      margin-top: 0.15rem;
+    }
+    .chip.inflight { background: var(--ship-inflight); color: var(--ship-inflight-ink); }
+    .chip.ok { background: var(--ship-ok); color: var(--ship-ok-ink); }
+    .chip.blocked { background: var(--ship-blocked); color: var(--ship-blocked-ink); }
+    .chip.failed { background: var(--ship-failed); color: var(--ship-failed-ink); }
+    .row .title { font-size: 0.82rem; font-weight: 600; line-height: 1.25; }
+    .row .sub { font-size: 0.72rem; color: var(--ink-soft); margin-top: 0.12rem; }
+    .detail {
+      border-top: 1px solid var(--line);
+      padding: 0.75rem;
+      background: var(--surface);
+    }
+    .detail h3 { font-size: 0.85rem; margin: 0 0 0.35rem; }
+    .detail p { font-size: 0.78rem; color: var(--ink-soft); margin: 0 0 0.65rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .btn {
+      appearance: none;
+      font: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.4rem 0.65rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-color: var(--accent);
+    }
+    .empty {
+      padding: 1.5rem 1rem;
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 0.82rem;
+    }
+    .toast {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--accent);
+      min-height: 1rem;
+      margin-top: 0.45rem;
+    }
+
+    .callout {
+      margin-top: 1.35rem;
+      max-width: 52rem;
+      padding: 1rem 1.1rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      font-size: 0.85rem;
+    }
+    .callout strong { display: block; margin-bottom: 0.35rem; }
+    .callout ol { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+    .callout li { margin: 0.25rem 0; }
+    .callout code {
+      font-family: var(--mono);
+      font-size: 0.8em;
+      color: var(--accent);
+    }
+    svg.ic {
+      width: 0.95rem; height: 0.95rem;
+      stroke: currentColor; fill: none;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+      vertical-align: -0.15em;
+    }
+  </style>
+</head>
+<body>
+  <p class="crumb">
+    <a href="/">eidos ui</a> /
+    <a href="../TECHNIQUE.md">shipr-surfaces</a> / v0
+  </p>
+  <h1>Chrome side panel · Shipr defaults</h1>
+  <p class="lede">
+    <strong>Lesson:</strong> design for Chrome’s 360px side-panel floor
+    (<code style="font-family:var(--mono);font-size:0.85em;color:var(--accent)">--panel-side-min</code>).
+    The host page owns context (repo · workflow). The panel is a dense ledger of the same shipments, not a second app chrome.
+  </p>
+
+  <div class="stage" id="stage">
+    <div class="browser">
+      <div class="browser-bar">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div class="url" id="url">github.com/eidos-agi/shipr/actions</div>
+      </div>
+      <div class="host">
+        <div class="gh-top">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+          <div class="repo"><span>eidos-agi / </span>shipr</div>
+        </div>
+        <nav class="gh-nav" aria-label="Repo tabs">
+          <button type="button" data-tab="code">Code</button>
+          <button type="button" class="on" data-tab="actions">Actions</button>
+          <button type="button" data-tab="prs">Pull requests</button>
+        </nav>
+        <div class="gh-body">
+          <h2>Workflow runs</h2>
+          <div id="runs"></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel" aria-label="Shipr side panel">
+      <div class="panel-head">
+        <div class="panel-brand">
+          <span class="mark">Shipr</span>
+          <span class="live" id="inflight-badge">2 in flight</span>
+        </div>
+        <div class="ctx" id="ctx">eidos-agi/shipr <span class="soft">· Actions</span></div>
+      </div>
+      <div class="filters" role="group" aria-label="Filter">
+        <button type="button" class="on" data-filter="all">All</button>
+        <button type="button" data-filter="inflight">In flight</button>
+        <button type="button" data-filter="blocked">Blocked</button>
+        <button type="button" data-filter="failed">Failed</button>
+      </div>
+      <div class="list" id="list"></div>
+      <div class="detail" id="detail"></div>
+    </aside>
+  </div>
+
+  <div class="callout">
+    <strong>Ship checklist (copy into the real add-in)</strong>
+    <ol>
+      <li>Panel content width targets <code>--panel-side-min</code> (360px). Chrome will not let you set a smaller default.</li>
+      <li>Header context comes from the page URL (org/repo · PR or workflow), not a global workspace switcher.</li>
+      <li>One shared selection: host run click ↔ panel row. Filters never invent a second source of truth.</li>
+      <li>Status chips use only <code>--ship-*</code> tokens from <code>/brand.css</code>.</li>
+      <li>Dense rows, not cards. Primary action opens the ledger; secondary copies a frontier hint for agents.</li>
+      <li>Always implement empty, unpaired, and error states (toggle unpaired below in a later rung if needed).</li>
+    </ol>
+  </div>
+
+  <script>
+    const SHIPS = [
+      { id: "s1", name: "release · v0.4.2", status: "inflight", age: "2m", blocker: "Waiting on proof_commands", workflow: "Release" },
+      { id: "s2", name: "deploy · staging", status: "inflight", age: "8m", blocker: "Railway module running", workflow: "Deploy" },
+      { id: "s3", name: "publish · npm", status: "blocked", age: "21m", blocker: "approval_gates: production_deploy", workflow: "Publish" },
+      { id: "s4", name: "ci · main", status: "ok", age: "1h", blocker: "Passed go test ./…", workflow: "CI" },
+      { id: "s5", name: "hotfix · railguey absorb", status: "failed", age: "3h", blocker: "proof_commands exit 1", workflow: "CI" },
+    ];
+
+    let selected = "s1";
+    let filter = "all";
+    let tab = "actions";
+
+    const CHIP = { inflight: "In flight", ok: "Ok", blocked: "Blocked", failed: "Failed" };
+
+    function renderRuns() {
+      const el = document.getElementById("runs");
+      el.innerHTML = SHIPS.map((s) => `
+        <button type="button" class="run${s.id === selected ? " sel" : ""}" data-id="${s.id}" data-status="${s.status}">
+          <span class="dot" aria-hidden="true"></span>
+          <span>
+            <div class="name">${s.workflow}: ${esc(s.name)}</div>
+            <div class="meta">${esc(s.blocker)}</div>
+          </span>
+          <span class="when">${s.age} ago</span>
+        </button>
+      `).join("");
+      el.querySelectorAll(".run").forEach((b) => b.addEventListener("click", () => {
+        selected = b.dataset.id;
+        render();
+      }));
+    }
+
+    function renderList() {
+      const el = document.getElementById("list");
+      const rows = SHIPS.filter((s) => filter === "all" || s.status === filter);
+      if (!rows.length) {
+        el.innerHTML = `<div class="empty">No shipments match this filter for the current page context.</div>`;
+        return;
+      }
+      el.innerHTML = rows.map((s) => `
+        <button type="button" class="row${s.id === selected ? " sel" : ""}" data-id="${s.id}">
+          <span class="chip ${s.status}">${CHIP[s.status]}</span>
+          <span>
+            <div class="title">${esc(s.name)}</div>
+            <div class="sub">${esc(s.blocker)} · ${s.age} ago</div>
+          </span>
+        </button>
+      `).join("");
+      el.querySelectorAll(".row").forEach((b) => b.addEventListener("click", () => {
+        selected = b.dataset.id;
+        render();
+      }));
+    }
+
+    function renderDetail() {
+      const s = SHIPS.find((x) => x.id === selected) || SHIPS[0];
+      const el = document.getElementById("detail");
+      el.innerHTML = `
+        <h3>${esc(s.name)}</h3>
+        <p>${esc(s.blocker)}</p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="open-ledger">Open ledger</button>
+          <button type="button" class="btn" id="copy-frontier">Copy frontier hint</button>
+        </div>
+        <div class="toast" id="toast" aria-live="polite"></div>
+      `;
+      document.getElementById("open-ledger").onclick = () => {
+        document.getElementById("toast").textContent = "Would open /.shipr/release-attempts/ for " + s.id;
+      };
+      document.getElementById("copy-frontier").onclick = async () => {
+        const text = `shipr frontier — ${s.name} (${s.status}): ${s.blocker}`;
+        try { await navigator.clipboard.writeText(text); } catch {}
+        document.getElementById("toast").textContent = "Copied frontier hint";
+      };
+    }
+
+    function renderBadge() {
+      const n = SHIPS.filter((s) => s.status === "inflight").length;
+      document.getElementById("inflight-badge").textContent = n + " in flight";
+    }
+
+    function renderCtx() {
+      const map = {
+        code: ["eidos-agi/shipr", "Code", "github.com/eidos-agi/shipr"],
+        actions: ["eidos-agi/shipr", "Actions", "github.com/eidos-agi/shipr/actions"],
+        prs: ["eidos-agi/shipr", "PR #48", "github.com/eidos-agi/shipr/pull/48"],
+      };
+      const [repo, soft, url] = map[tab];
+      document.getElementById("ctx").innerHTML = `${repo} <span class="soft">· ${soft}</span>`;
+      document.getElementById("url").textContent = url;
+    }
+
+    function render() {
+      renderCtx();
+      renderBadge();
+      renderRuns();
+      renderList();
+      renderDetail();
+    }
+
+    function esc(t) {
+      return String(t).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+    }
+
+    document.querySelectorAll(".filters button").forEach((b) => {
+      b.addEventListener("click", () => {
+        filter = b.dataset.filter;
+        document.querySelectorAll(".filters button").forEach((x) => x.classList.toggle("on", x === b));
+        renderList();
+      });
+    });
+    document.querySelectorAll(".gh-nav button").forEach((b) => {
+      b.addEventListener("click", () => {
+        tab = b.dataset.tab;
+        document.querySelectorAll(".gh-nav button").forEach((x) => x.classList.toggle("on", x === b));
+        render();
+      });
+    });
+
+    render();
+  </script>
+</body>
+</html>
